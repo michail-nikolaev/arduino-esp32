@@ -4,7 +4,7 @@
 // Initialize the static instance pointer
 ZigbeeColorDimmerSwitch *ZigbeeColorDimmerSwitch::_instance = nullptr;
 
-ZigbeeColorDimmerSwitch::ZigbeeColorDimmerSwitch(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeColorDimmerSwitch::ZigbeeColorDimmerSwitch(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_COLOR_DIMMER_SWITCH_DEVICE_ID;
   _instance = this;   // Set the static pointer to this instance
   _device = nullptr;  // Initialize light pointer to null
@@ -13,8 +13,11 @@ ZigbeeColorDimmerSwitch::ZigbeeColorDimmerSwitch(uint8_t endpoint) : ZigbeeEP(en
   _cluster_list = esp_zb_color_dimmable_switch_clusters_create(&switch_cfg);
 
   _ep_config = {
-    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_COLOR_DIMMER_SWITCH_DEVICE_ID, .app_device_version = 0
+    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_COLOR_DIMMER_SWITCH_DEVICE_ID, .app_device_version = app_device_version
   };
+}
+
+ZigbeeColorDimmerSwitch::ZigbeeColorDimmerSwitch(uint8_t endpoint) : ZigbeeColorDimmerSwitch(endpoint, 0) {
 }
 
 void ZigbeeColorDimmerSwitch::bindCb(esp_zb_zdp_status_t zdo_status, void *user_ctx) {

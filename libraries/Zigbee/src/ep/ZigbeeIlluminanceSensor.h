@@ -30,6 +30,7 @@
 class ZigbeeIlluminanceSensor : public ZigbeeEP {
 public:
   ZigbeeIlluminanceSensor(uint8_t endpoint);
+  ZigbeeIlluminanceSensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeIlluminanceSensor() {}
 
   // Set the illuminance value

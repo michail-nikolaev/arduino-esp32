@@ -1,7 +1,7 @@
 #include "ZigbeeTempSensor.h"
 #if CONFIG_ZB_ENABLED
 
-ZigbeeTempSensor::ZigbeeTempSensor(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeTempSensor::ZigbeeTempSensor(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_TEMPERATURE_SENSOR_DEVICE_ID;
   _humidity_sensor = false;
 
@@ -9,7 +9,7 @@ ZigbeeTempSensor::ZigbeeTempSensor(uint8_t endpoint) : ZigbeeEP(endpoint) {
   _cluster_list = esp_zb_temperature_sensor_clusters_create(&temp_sensor_cfg);
 
   _ep_config = {
-    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_TEMPERATURE_SENSOR_DEVICE_ID, .app_device_version = 0
+    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_TEMPERATURE_SENSOR_DEVICE_ID, .app_device_version = app_device_version
   };
 }
 

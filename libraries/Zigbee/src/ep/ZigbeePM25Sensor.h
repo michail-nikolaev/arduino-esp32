@@ -39,6 +39,7 @@ typedef struct zigbee_pm2_5_sensor_cfg_s {
 class ZigbeePM25Sensor : public ZigbeeEP {
 public:
   ZigbeePM25Sensor(uint8_t endpoint);
+  ZigbeePM25Sensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeePM25Sensor() {}
 
   // Set the PM2.5 value in 0.1 µg/m³

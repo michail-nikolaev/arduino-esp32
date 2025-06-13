@@ -42,6 +42,7 @@ typedef struct zigbee_vibration_sensor_cfg_s {
 class ZigbeeVibrationSensor : public ZigbeeEP {
 public:
   ZigbeeVibrationSensor(uint8_t endpoint);
+  ZigbeeVibrationSensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeVibrationSensor() {}
 
   // Set the IAS Client endpoint number (default is 1)

@@ -1,15 +1,18 @@
 #include "ZigbeePowerOutlet.h"
 #if CONFIG_ZB_ENABLED
 
-ZigbeePowerOutlet::ZigbeePowerOutlet(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeePowerOutlet::ZigbeePowerOutlet(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_MAINS_POWER_OUTLET_DEVICE_ID;
 
   esp_zb_mains_power_outlet_cfg_t outlet_cfg = ESP_ZB_DEFAULT_MAINS_POWER_OUTLET_CONFIG();
   _cluster_list = esp_zb_mains_power_outlet_clusters_create(&outlet_cfg);
   _ep_config = {
-    .endpoint = endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_MAINS_POWER_OUTLET_DEVICE_ID, .app_device_version = 0
+    .endpoint = endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_MAINS_POWER_OUTLET_DEVICE_ID, .app_device_version = app_device_version
   };
   log_v("Outlet endpoint created %d", _endpoint);
+}
+
+ZigbeePowerOutlet::ZigbeePowerOutlet(uint8_t endpoint) : ZigbeePowerOutlet(endpoint, 0) {
 }
 
 //set attribute method -> method overridden in child class

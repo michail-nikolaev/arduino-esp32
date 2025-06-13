@@ -39,6 +39,7 @@ typedef struct zigbee_flow_sensor_cfg_s {
 class ZigbeeFlowSensor : public ZigbeeEP {
 public:
   ZigbeeFlowSensor(uint8_t endpoint);
+  ZigbeeFlowSensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeFlowSensor() {}
 
   // Set the flow value in 0,1 m3/h

@@ -12,6 +12,7 @@
 class ZigbeeGateway : public ZigbeeEP {
 public:
   ZigbeeGateway(uint8_t endpoint);
+  ZigbeeGateway(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeGateway() {}
 };
 

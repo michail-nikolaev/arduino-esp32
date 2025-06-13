@@ -8,7 +8,7 @@ static float zb_s16_to_temperature(int16_t value) {
 // Initialize the static instance of the class
 ZigbeeThermostat *ZigbeeThermostat::_instance = nullptr;
 
-ZigbeeThermostat::ZigbeeThermostat(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeThermostat::ZigbeeThermostat(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_THERMOSTAT_DEVICE_ID;
   _instance = this;   // Set the static pointer to this instance
   _device = nullptr;  // Initialize sensor pointer to null
@@ -26,7 +26,7 @@ ZigbeeThermostat::ZigbeeThermostat(uint8_t endpoint) : ZigbeeEP(endpoint) {
   /* Add temperature measurement cluster for attribute reporting */
   esp_zb_cluster_list_add_temperature_meas_cluster(_cluster_list, esp_zb_temperature_meas_cluster_create(NULL), ESP_ZB_ZCL_CLUSTER_CLIENT_ROLE);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_THERMOSTAT_DEVICE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_THERMOSTAT_DEVICE_ID, .app_device_version = app_device_version};
 }
 
 void ZigbeeThermostat::bindCb(esp_zb_zdp_status_t zdo_status, void *user_ctx) {

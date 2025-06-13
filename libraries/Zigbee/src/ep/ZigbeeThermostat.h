@@ -32,6 +32,7 @@
 class ZigbeeThermostat : public ZigbeeEP {
 public:
   ZigbeeThermostat(uint8_t endpoint);
+  ZigbeeThermostat(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeThermostat() {}
 
   void onTempReceive(void (*callback)(float)) {

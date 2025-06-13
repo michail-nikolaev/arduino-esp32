@@ -58,6 +58,7 @@ typedef struct zigbee_electrical_measurement_cfg_s {
 class ZigbeeElectricalMeasurement : public ZigbeeEP {
 public:
   ZigbeeElectricalMeasurement(uint8_t endpoint);
+  ZigbeeElectricalMeasurement(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeElectricalMeasurement() {}
 
   /**

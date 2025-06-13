@@ -12,14 +12,17 @@ esp_zb_cluster_list_t *zigbee_flow_sensor_clusters_create(zigbee_flow_sensor_cfg
   return cluster_list;
 }
 
-ZigbeeFlowSensor::ZigbeeFlowSensor(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeFlowSensor::ZigbeeFlowSensor(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID;
 
   //Create custom pressure sensor configuration
   zigbee_flow_sensor_cfg_t flow_sensor_cfg = ZIGBEE_DEFAULT_FLOW_SENSOR_CONFIG();
   _cluster_list = zigbee_flow_sensor_clusters_create(&flow_sensor_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = app_device_version};
+}
+
+ZigbeeFlowSensor::ZigbeeFlowSensor(uint8_t endpoint) : ZigbeeFlowSensor(endpoint, 0) {
 }
 
 bool ZigbeeFlowSensor::setMinMaxValue(float min, float max) {

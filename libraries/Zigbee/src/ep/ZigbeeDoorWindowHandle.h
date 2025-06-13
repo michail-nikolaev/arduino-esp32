@@ -43,6 +43,7 @@ typedef struct zigbee_door_window_handle_cfg_s {
 class ZigbeeDoorWindowHandle : public ZigbeeEP {
 public:
   ZigbeeDoorWindowHandle(uint8_t endpoint);
+  ZigbeeDoorWindowHandle(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeDoorWindowHandle() {}
 
   // Set the IAS Client endpoint number (default is 1)

@@ -53,6 +53,7 @@
 class ZigbeeColorDimmableLight : public ZigbeeEP {
 public:
   ZigbeeColorDimmableLight(uint8_t endpoint);
+  ZigbeeColorDimmableLight(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeColorDimmableLight() {}
 
   void onLightChange(void (*callback)(bool, uint8_t, uint8_t, uint8_t, uint8_t)) {
