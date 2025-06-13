@@ -12,7 +12,7 @@ esp_zb_cluster_list_t *zigbee_door_window_handle_clusters_create(zigbee_door_win
   return cluster_list;
 }
 
-ZigbeeDoorWindowHandle::ZigbeeDoorWindowHandle(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeDoorWindowHandle::ZigbeeDoorWindowHandle(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_IAS_ZONE_ID;
   _zone_status = 0;
   _zone_id = 0xff;
@@ -22,7 +22,10 @@ ZigbeeDoorWindowHandle::ZigbeeDoorWindowHandle(uint8_t endpoint) : ZigbeeEP(endp
   zigbee_door_window_handle_cfg_t door_window_handle_cfg = ZIGBEE_DEFAULT_DOOR_WINDOW_HANDLE_CONFIG();
   _cluster_list = zigbee_door_window_handle_clusters_create(&door_window_handle_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_IAS_ZONE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_IAS_ZONE_ID, .app_device_version = app_device_version};
+}
+
+ZigbeeDoorWindowHandle::ZigbeeDoorWindowHandle(uint8_t endpoint) : ZigbeeDoorWindowHandle(endpoint, 0) {
 }
 
 void ZigbeeDoorWindowHandle::setIASClientEndpoint(uint8_t ep_number) {

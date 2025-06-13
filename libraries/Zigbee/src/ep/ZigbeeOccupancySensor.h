@@ -39,6 +39,7 @@ typedef struct zigbee_occupancy_sensor_cfg_s {
 class ZigbeeOccupancySensor : public ZigbeeEP {
 public:
   ZigbeeOccupancySensor(uint8_t endpoint);
+  ZigbeeOccupancySensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeOccupancySensor() {}
 
   // Set the occupancy value. True for occupied, false for unoccupied

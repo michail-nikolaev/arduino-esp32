@@ -12,6 +12,7 @@
 class ZigbeeSwitch : public ZigbeeEP {
 public:
   ZigbeeSwitch(uint8_t endpoint);
+  ZigbeeSwitch(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeSwitch() {}
 
   // methods to control the on/off light

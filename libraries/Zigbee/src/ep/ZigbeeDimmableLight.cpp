@@ -3,17 +3,20 @@
 
 #include "esp_zigbee_cluster.h"
 
-ZigbeeDimmableLight::ZigbeeDimmableLight(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeDimmableLight::ZigbeeDimmableLight(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_DIMMABLE_LIGHT_DEVICE_ID;
 
   zigbee_dimmable_light_cfg_t light_cfg = ZIGBEE_DEFAULT_DIMMABLE_LIGHT_CONFIG();
   _cluster_list = zigbee_dimmable_light_clusters_create(&light_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_DIMMABLE_LIGHT_DEVICE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_DIMMABLE_LIGHT_DEVICE_ID, .app_device_version = app_device_version};
 
   // set default values
   _current_state = false;
   _current_level = 255;
+}
+
+ZigbeeDimmableLight::ZigbeeDimmableLight(uint8_t endpoint) : ZigbeeDimmableLight(endpoint, 0) {
 }
 
 // set attribute method -> method overridden in child class

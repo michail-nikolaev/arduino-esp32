@@ -42,6 +42,7 @@ typedef struct zigbee_contact_switch_cfg_s {
 class ZigbeeContactSwitch : public ZigbeeEP {
 public:
   ZigbeeContactSwitch(uint8_t endpoint);
+  ZigbeeContactSwitch(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeContactSwitch() {}
 
   // Set the IAS Client endpoint number (default is 1)

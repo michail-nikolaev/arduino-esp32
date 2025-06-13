@@ -25,6 +25,7 @@ typedef struct zigbee_analog_cfg_s {
 class ZigbeeAnalog : public ZigbeeEP {
 public:
   ZigbeeAnalog(uint8_t endpoint);
+  ZigbeeAnalog(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeAnalog() {}
 
   // Add analog clusters

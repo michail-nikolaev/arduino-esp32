@@ -17,7 +17,7 @@ esp_zb_cluster_list_t *zigbee_electrical_measurement_clusters_create(zigbee_elec
   return cluster_list;
 }
 
-ZigbeeElectricalMeasurement::ZigbeeElectricalMeasurement(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeElectricalMeasurement::ZigbeeElectricalMeasurement(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID;
 
   //Create custom pressure sensor configuration
@@ -25,8 +25,11 @@ ZigbeeElectricalMeasurement::ZigbeeElectricalMeasurement(uint8_t endpoint) : Zig
   _cluster_list = zigbee_electrical_measurement_clusters_create(&electrical_measurement_cfg);
 
   _ep_config = {
-    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_METER_INTERFACE_DEVICE_ID, .app_device_version = 0
+    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_METER_INTERFACE_DEVICE_ID, .app_device_version = app_device_version
   };
+}
+
+ZigbeeElectricalMeasurement::ZigbeeElectricalMeasurement(uint8_t endpoint) : ZigbeeElectricalMeasurement(endpoint, 0) {
 }
 
 /* DC MEASUREMENT */

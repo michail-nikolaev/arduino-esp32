@@ -37,6 +37,7 @@ typedef struct zigbee_wind_speed_sensor_cfg_s {
 class ZigbeeWindSpeedSensor : public ZigbeeEP {
 public:
   ZigbeeWindSpeedSensor(uint8_t endpoint);
+  ZigbeeWindSpeedSensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeWindSpeedSensor() {}
 
   // Set the WindSpeed value in 0,01 m/s

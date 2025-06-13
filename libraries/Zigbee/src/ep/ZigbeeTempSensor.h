@@ -12,6 +12,7 @@
 class ZigbeeTempSensor : public ZigbeeEP {
 public:
   ZigbeeTempSensor(uint8_t endpoint);
+  ZigbeeTempSensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeTempSensor() {}
 
   // Set the temperature value in 0,01°C

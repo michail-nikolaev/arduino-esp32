@@ -12,6 +12,7 @@
 class ZigbeeLight : public ZigbeeEP {
 public:
   ZigbeeLight(uint8_t endpoint);
+  ZigbeeLight(uint8_t endpointex, uint8_t app_device_version);
   ~ZigbeeLight() {}
 
   // Use to set a cb function to be called on light change

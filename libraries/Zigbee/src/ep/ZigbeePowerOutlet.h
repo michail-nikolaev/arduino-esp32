@@ -12,6 +12,7 @@
 class ZigbeePowerOutlet : public ZigbeeEP {
 public:
   ZigbeePowerOutlet(uint8_t endpoint);
+  ZigbeePowerOutlet(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeePowerOutlet() {}
 
   // Use to set a cb function to be called on outlet change

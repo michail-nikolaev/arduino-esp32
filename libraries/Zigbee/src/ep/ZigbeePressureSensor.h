@@ -39,6 +39,7 @@ typedef struct zigbee_pressure_sensor_cfg_s {
 class ZigbeePressureSensor : public ZigbeeEP {
 public:
   ZigbeePressureSensor(uint8_t endpoint);
+  ZigbeePressureSensor(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeePressureSensor() {}
 
   // Set the pressure value in 1 hPa

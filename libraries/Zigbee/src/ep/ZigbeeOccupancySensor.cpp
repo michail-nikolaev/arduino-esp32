@@ -12,14 +12,17 @@ esp_zb_cluster_list_t *zigbee_occupancy_sensor_clusters_create(zigbee_occupancy_
   return cluster_list;
 }
 
-ZigbeeOccupancySensor::ZigbeeOccupancySensor(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeOccupancySensor::ZigbeeOccupancySensor(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID;
 
   //Create custom occupancy sensor configuration
   zigbee_occupancy_sensor_cfg_t occupancy_sensor_cfg = ZIGBEE_DEFAULT_OCCUPANCY_SENSOR_CONFIG();
   _cluster_list = zigbee_occupancy_sensor_clusters_create(&occupancy_sensor_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = app_device_version};
+}
+
+ZigbeeOccupancySensor::ZigbeeOccupancySensor(uint8_t endpoint) : ZigbeeOccupancySensor(endpoint, 0) {
 }
 
 bool ZigbeeOccupancySensor::setSensorType(uint8_t sensor_type) {

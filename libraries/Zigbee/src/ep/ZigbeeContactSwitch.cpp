@@ -12,7 +12,7 @@ esp_zb_cluster_list_t *zigbee_contact_switch_clusters_create(zigbee_contact_swit
   return cluster_list;
 }
 
-ZigbeeContactSwitch::ZigbeeContactSwitch(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeContactSwitch::ZigbeeContactSwitch(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_IAS_ZONE_ID;
   _zone_status = 0;
   _zone_id = 0xff;
@@ -22,7 +22,10 @@ ZigbeeContactSwitch::ZigbeeContactSwitch(uint8_t endpoint) : ZigbeeEP(endpoint) 
   zigbee_contact_switch_cfg_t contact_switch_cfg = ZIGBEE_DEFAULT_CONTACT_SWITCH_CONFIG();
   _cluster_list = zigbee_contact_switch_clusters_create(&contact_switch_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_IAS_ZONE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_IAS_ZONE_ID, .app_device_version = app_device_version};
+}
+
+ZigbeeContactSwitch::ZigbeeContactSwitch(uint8_t endpoint) : ZigbeeContactSwitch(endpoint, 0) {
 }
 
 void ZigbeeContactSwitch::setIASClientEndpoint(uint8_t ep_number) {

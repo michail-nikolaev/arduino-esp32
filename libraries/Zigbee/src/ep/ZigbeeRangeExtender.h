@@ -12,6 +12,7 @@
 class ZigbeeRangeExtender : public ZigbeeEP {
 public:
   ZigbeeRangeExtender(uint8_t endpoint);
+  ZigbeeRangeExtender(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeRangeExtender() {}
 };
 

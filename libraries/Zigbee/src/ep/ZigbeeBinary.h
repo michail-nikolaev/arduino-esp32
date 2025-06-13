@@ -48,6 +48,7 @@ typedef struct zigbee_binary_cfg_s {
 class ZigbeeBinary : public ZigbeeEP {
 public:
   ZigbeeBinary(uint8_t endpoint);
+  ZigbeeBinary(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeBinary() {}
 
   // Add binary cluster

@@ -46,7 +46,7 @@ esp_zb_cluster_list_t *ZigbeeWindowCovering::zigbee_window_covering_clusters_cre
   return esp_zb_cluster_list;
 }
 
-ZigbeeWindowCovering::ZigbeeWindowCovering(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeWindowCovering::ZigbeeWindowCovering(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_WINDOW_COVERING_DEVICE_ID;
 
   // set default values for window covering attributes
@@ -66,7 +66,7 @@ ZigbeeWindowCovering::ZigbeeWindowCovering(uint8_t endpoint) : ZigbeeEP(endpoint
   _cluster_list = zigbee_window_covering_clusters_create(&window_covering_cfg);
 
   _ep_config = {
-    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_WINDOW_COVERING_DEVICE_ID, .app_device_version = 0
+    .endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_WINDOW_COVERING_DEVICE_ID, .app_device_version = app_device_version
   };
 }
 

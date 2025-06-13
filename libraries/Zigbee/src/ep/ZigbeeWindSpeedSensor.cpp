@@ -15,13 +15,13 @@ esp_zb_cluster_list_t *zigbee_wind_speed_sensor_clusters_create(zigbee_wind_spee
 }
 
 // There is no device_id for wind speed sensor, we use a generic one
-ZigbeeWindSpeedSensor::ZigbeeWindSpeedSensor(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeWindSpeedSensor::ZigbeeWindSpeedSensor(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID;
 
   zigbee_wind_speed_sensor_cfg_t windspeed_sensor_cfg = ZIGBEE_DEFAULT_WIND_SPEED_SENSOR_CONFIG();
   _cluster_list = zigbee_wind_speed_sensor_clusters_create(&windspeed_sensor_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = app_device_version};
 }
 
 static uint16_t zb_windspeed_to_u16(float windspeed) {

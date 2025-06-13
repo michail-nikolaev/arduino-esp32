@@ -1,13 +1,16 @@
 #include "ZigbeeIlluminanceSensor.h"
 #if CONFIG_ZB_ENABLED
 
-ZigbeeIlluminanceSensor::ZigbeeIlluminanceSensor(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeIlluminanceSensor::ZigbeeIlluminanceSensor(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_LIGHT_SENSOR_DEVICE_ID;
 
   esp_zb_light_sensor_cfg_t light_sensor_cfg = ZIGBEE_DEFAULT_ILLUMINANCE_SENSOR_CONFIG();
   _cluster_list = esp_zb_light_sensor_clusters_create(&light_sensor_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_LIGHT_SENSOR_DEVICE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_LIGHT_SENSOR_DEVICE_ID, .app_device_version = app_device_version};
+}
+
+ZigbeeIlluminanceSensor::ZigbeeIlluminanceSensor(uint8_t endpoint) : ZigbeeIlluminanceSensor(endpoint, 0) {
 }
 
 bool ZigbeeIlluminanceSensor::setMinMaxValue(uint16_t min, uint16_t max) {

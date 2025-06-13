@@ -14,14 +14,17 @@ esp_zb_cluster_list_t *zigbee_carbon_dioxide_sensor_clusters_create(zigbee_carbo
   return cluster_list;
 }
 
-ZigbeeCarbonDioxideSensor::ZigbeeCarbonDioxideSensor(uint8_t endpoint) : ZigbeeEP(endpoint) {
+ZigbeeCarbonDioxideSensor::ZigbeeCarbonDioxideSensor(uint8_t endpoint, uint8_t app_device_version) : ZigbeeEP(endpoint) {
   _device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID;
 
   //Create custom pressure sensor configuration
   zigbee_carbon_dioxide_sensor_cfg_t carbon_dioxide_sensor_cfg = ZIGBEE_DEFAULT_CARBON_DIOXIDE_SENSOR_CONFIG();
   _cluster_list = zigbee_carbon_dioxide_sensor_clusters_create(&carbon_dioxide_sensor_cfg);
 
-  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = 0};
+  _ep_config = {.endpoint = _endpoint, .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID, .app_device_id = ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, .app_device_version = app_device_version};
+}
+
+ZigbeeCarbonDioxideSensor::ZigbeeCarbonDioxideSensor(uint8_t endpoint) : ZigbeeCarbonDioxideSensor(endpoint, 0) {
 }
 
 bool ZigbeeCarbonDioxideSensor::setMinMaxValue(float min, float max) {

@@ -67,6 +67,7 @@ typedef struct zigbee_window_covering_cfg_s {
 class ZigbeeWindowCovering : public ZigbeeEP {
 public:
   ZigbeeWindowCovering(uint8_t endpoint);
+  ZigbeeWindowCovering(uint8_t endpoint, uint8_t app_device_version);
   ~ZigbeeWindowCovering() {}
 
   // Set the callback functions for the window covering commands
