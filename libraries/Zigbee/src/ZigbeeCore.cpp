@@ -32,6 +32,8 @@ ZigbeeCore::ZigbeeCore() {
   _scan_duration = 3;  // default scan duration
   _rx_on_when_idle = true;
   _debug = false;
+  _enable_joining_to_distributed = false;
+  _standard_distributed_key = nullptr;
   if (!lock) {
     lock = xSemaphoreCreateBinary();
     if (lock == NULL) {
@@ -147,6 +149,11 @@ bool ZigbeeCore::zigbeeInit(esp_zb_cfg_t *zb_cfg, bool erase_nvs) {
   // Initialize Zigbee stack
   log_d("Initialize Zigbee stack");
   esp_zb_init(zb_cfg);
+
+  esp_zb_enable_joining_to_distributed(_enable_joining_to_distributed);
+  if (_standard_distributed_key != nullptr) {
+    esp_zb_secur_TC_standard_distributed_key_set(_standard_distributed_key);
+  }
 
   // Register all Zigbee EPs in list
   if (ep_objects.empty()) {
@@ -745,6 +752,14 @@ void ZigbeeCore::setNVRAMChannelMask(uint32_t mask) {
   esp_zb_set_channel_mask(_primary_channel_mask);
   zb_nvram_write_dataset(ZB_NVRAM_COMMON_DATA);
   log_v("Channel mask set to 0x%08x", mask);
+}
+
+void ZigbeeCore::setEnableJoiningToDistributed(bool enable) {
+  _enable_joining_to_distributed = enable;
+}
+
+void ZigbeeCore::setStandardDistributedKey(uint8_t *key) {
+  _standard_distributed_key = key;
 }
 
 // Function to convert enum value to string
