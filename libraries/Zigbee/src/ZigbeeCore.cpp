@@ -115,6 +115,36 @@ bool ZigbeeCore::addEndpoint(ZigbeeEP *ep) {
     log_e("Failed to add endpoint: 0x%x: %s", ret, esp_err_to_name(ret));
     return false;
   }
+
+  // Apply On/Off cluster attributes if set
+  if (ep->_on_off_on_time_set || ep->_on_off_global_scene_control_set) {
+    esp_zb_cluster_list_t *cluster_list = esp_zb_ep_list_get_ep(_zb_ep_list, ep->_endpoint);
+    if (cluster_list == nullptr) {
+      log_e("Failed esp_zb_ep_list_get_ep");
+      return false;
+    }
+
+    esp_zb_attribute_list_t *onoff_attr_list =
+         esp_zb_cluster_list_get_cluster(cluster_list, ESP_ZB_ZCL_CLUSTER_ID_ON_OFF, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+    if (onoff_attr_list == nullptr) {
+      log_w("esp_zb_cluster_list_get_cluster failed endpoint %d", ep->_endpoint);
+    } else {
+      if (ep->_on_off_on_time_set) {
+        if (esp_zb_on_off_cluster_add_attr(onoff_attr_list, ESP_ZB_ZCL_ATTR_ON_OFF_ON_TIME, &ep->_on_off_on_time) != ESP_OK) {
+          log_e("Failed esp_zb_on_off_cluster_add_attr(ESP_ZB_ZCL_ATTR_ON_OFF_ON_TIME) for endpoint %d", ep->_endpoint);
+          return false;
+        }
+      }
+
+      if (ep->_on_off_global_scene_control_set) {
+        if (esp_zb_on_off_cluster_add_attr(onoff_attr_list, ESP_ZB_ZCL_ATTR_ON_OFF_GLOBAL_SCENE_CONTROL, &ep->_on_off_global_scene_control) != ESP_OK) {
+          log_e("Failed esp_zb_on_off_cluster_add_attr(ESP_ZB_ZCL_ATTR_ON_OFF_GLOBAL_SCENE_CONTROL) endpoint %d", ep->_endpoint);
+          return false;
+        }
+      }
+    }
+  }
+
   return true;
 }
 
@@ -154,6 +184,11 @@ bool ZigbeeCore::zigbeeInit(esp_zb_cfg_t *zb_cfg, bool erase_nvs) {
   if (_standard_distributed_key != nullptr) {
     esp_zb_secur_TC_standard_distributed_key_set(_standard_distributed_key);
   }
+
+  // allow joining the Philips Hue network(s)
+  esp_zb_enable_joining_to_distributed(true);
+  uint8_t secret_zll_trust_center_key[] = { 0x81, 0x42, 0x86, 0x86, 0x5D, 0xC1, 0xC8, 0xB2, 0xC8, 0xCB, 0xC5, 0x2E, 0x5D, 0x65, 0xD1, 0xB8 };
+  esp_zb_secur_TC_standard_distributed_key_set(secret_zll_trust_center_key);
 
   // Register all Zigbee EPs in list
   if (ep_objects.empty()) {
