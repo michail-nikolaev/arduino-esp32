@@ -94,6 +94,12 @@ public:
   bool setTime(tm time);
   bool setTimezone(int32_t gmt_offset);
 
+  // On/Off cluster attributes
+  void setOnOffOnTime(uint16_t on_time) { _on_off_on_time = on_time; _on_off_on_time_set = true; }
+  void setOnOffGlobalSceneControl(bool global_scene_control) {
+     _on_off_global_scene_control = global_scene_control; _on_off_global_scene_control_set = true;
+  }
+
   // Get time from Coordinator or specific endpoint (blocking until response)
   struct tm getTime(uint8_t endpoint = 1, int32_t short_addr = 0x0000, esp_zb_ieee_addr_t ieee_addr = {0});
   int32_t getTimezone(uint8_t endpoint = 1, int32_t short_addr = 0x0000, esp_zb_ieee_addr_t ieee_addr = {0});  // gmt offset in seconds
@@ -178,6 +184,12 @@ protected:
   SemaphoreHandle_t lock;
   zb_power_source_t _power_source;
   uint8_t _time_status;
+
+  // On/Off cluster attribute fields
+  uint16_t _on_off_on_time;
+  bool _on_off_global_scene_control;
+  bool _on_off_on_time_set;
+  bool _on_off_global_scene_control_set;
 
   friend class ZigbeeCore;
 };

@@ -20,6 +20,10 @@ ZigbeeEP::ZigbeeEP(uint8_t endpoint) {
   _is_bound = false;
   _use_manual_binding = false;
   _allow_multiple_binding = false;
+  _on_off_on_time = 0;
+  _on_off_global_scene_control = false;
+  _on_off_on_time_set = false;
+  _on_off_global_scene_control_set = false;
   if (!lock) {
     lock = xSemaphoreCreateBinary();
     if (lock == NULL) {
