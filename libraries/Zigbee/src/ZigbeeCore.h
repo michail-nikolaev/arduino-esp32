@@ -92,6 +92,8 @@ private:
   int16_t _scan_status;
   uint8_t _scan_duration;
   bool _rx_on_when_idle;
+  bool _enable_joining_to_distributed;
+  uint8_t *_standard_distributed_key;
 
   esp_zb_ep_list_t *_zb_ep_list;
   zigbee_role_t _role;
@@ -159,6 +161,9 @@ public:
   void setRebootOpenNetwork(uint8_t time);
   void openNetwork(uint8_t time);
   void closeNetwork();
+
+  void setEnableJoiningToDistributed(bool enable);
+  void setStandardDistributedKey(uint8_t *key);
 
   //scan_duration Time spent scanning each channel, in units of ((1 << scan_duration) + 1) * a beacon time. (15.36 microseconds)
   void scanNetworks(uint32_t channel_mask = ESP_ZB_TRANSCEIVER_ALL_CHANNELS_MASK, uint8_t scan_duration = 5);
