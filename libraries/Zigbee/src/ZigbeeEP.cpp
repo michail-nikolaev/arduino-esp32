@@ -36,6 +36,30 @@ void ZigbeeEP::setVersion(uint8_t version) {
   _ep_config.app_device_version = version;
 }
 
+bool ZigbeeEP::setSwBuild(const char *sw_build) {
+  char zb_sw_build[ZB_MAX_NAME_LENGTH + 2];
+  size_t sw_build_length = strlen(sw_build);
+  if (sw_build_length > ZB_MAX_NAME_LENGTH) {
+    log_e("Build version name is too long");
+    return false;
+  }
+  // Get and check the basic cluster
+  esp_zb_attribute_list_t *basic_cluster = esp_zb_cluster_list_get_cluster(_cluster_list, ESP_ZB_ZCL_CLUSTER_ID_BASIC, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+  if (basic_cluster == nullptr) {
+    log_e("Failed to get basic cluster");
+    return false;
+  }
+  zb_sw_build[0] = static_cast<char>(sw_build_length);
+  memcpy(zb_sw_build + 1, sw_build, sw_build_length);
+  zb_sw_build[sw_build_length + 1] = '\0';
+  esp_err_t ret = esp_zb_basic_cluster_add_attr(basic_cluster, ESP_ZB_ZCL_ATTR_BASIC_SW_BUILD_ID, (void *)zb_sw_build);
+  if (ret != ESP_OK) {
+    log_e("Failed to set sw build: 0x%x: %s", ret, esp_err_to_name(ret));
+  }
+  return ret == ESP_OK;
+}
+
+
 bool ZigbeeEP::setManufacturerAndModel(const char *name, const char *model) {
   // Allocate a new array of size length + 2 (1 for the length, 1 for null terminator)
   char zb_name[ZB_MAX_NAME_LENGTH + 2];
