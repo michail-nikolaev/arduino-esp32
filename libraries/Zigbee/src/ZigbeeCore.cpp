@@ -838,6 +838,8 @@ const char *ZigbeeCore::getDeviceTypeString(esp_zb_ha_standard_devices_t deviceI
     case ESP_ZB_HA_TEST_DEVICE_ID:                       return "Custom HA device for test";
     case ESP_ZB_HA_CUSTOM_TUNNEL_DEVICE_ID:              return "Custom Tunnel device";
     case ESP_ZB_HA_CUSTOM_ATTR_DEVICE_ID:                return "Custom Attributes Device";
+    case ESP_ZB_HA_EXT_COLOR_LIGHT_DEVICE_ID:            return "Hue Extended Color Light";
+    case ESP_ZB_HA_COLOR_TEMPERATURE_LIGHT_DEVICE_ID:    return "Hue Color Temperature Light";
     default:                                             return "Unknown device type";
   }
 }

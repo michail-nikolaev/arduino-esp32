@@ -12,6 +12,9 @@
 #define ZB_CMD_TIMEOUT             10000     // 10 seconds
 #define OTA_UPGRADE_QUERY_INTERVAL (1 * 60)  // 1 hour = 60 minutes
 
+#define ESP_ZB_HA_COLOR_TEMPERATURE_LIGHT_DEVICE_ID ((esp_zb_ha_standard_devices_t)0x010C)
+#define ESP_ZB_HA_EXT_COLOR_LIGHT_DEVICE_ID ((esp_zb_ha_standard_devices_t)0x010D)
+
 #define ZB_ARRAY_LENGHT(arr) (sizeof(arr) / sizeof(arr[0]))
 
 #define RGB_TO_XYZ(r, g, b, X, Y, Z)                               \
@@ -78,6 +81,7 @@ public:
 
   // Set Manufacturer name and model
   bool setManufacturerAndModel(const char *name, const char *model);
+  bool setSwBuild(const char *sw_build);
 
   // Methods to read manufacturer and model name from selected endpoint and short address
   char *readManufacturer(uint8_t endpoint, uint16_t short_addr, esp_zb_ieee_addr_t ieee_addr);

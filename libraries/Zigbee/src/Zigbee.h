@@ -11,6 +11,7 @@
 #include "ep/ZigbeeColorDimmerSwitch.h"
 #include "ep/ZigbeeSwitch.h"
 //// Lights
+#include "ep/ZigbeeHueLight.h"
 #include "ep/ZigbeeColorDimmableLight.h"
 #include "ep/ZigbeeDimmableLight.h"
 #include "ep/ZigbeeLight.h"
