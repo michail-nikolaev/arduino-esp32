@@ -53,8 +53,8 @@ ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
     //Add support for hue and saturation
     uint8_t hue = 0;
     uint8_t saturation = 0;
-    uint8_t current_x = 0x616b;
-    uint8_t current_y = 0x607d;
+    uint8_t current_x = 0;
+    uint8_t current_y = 0;
 
     uint16_t color_attr = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_TEMPERATURE_DEF_VALUE;
     uint16_t min_temp = 153;
@@ -194,7 +194,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
 
 void ZigbeeHueLight::lightChanged() {
   if (_on_light_change) {
-    _on_light_change(_current_state, _current_color.r, _current_color.g, _current_color.b, _current_level, _current_temperature);
+    _on_light_change(_current_state, _endpoint, _current_color.r, _current_color.g, _current_color.b, _current_level, _current_temperature);
   }
 }
 
