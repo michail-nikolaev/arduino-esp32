@@ -64,7 +64,7 @@ public:
   ZigbeeHueLight(uint8_t endpoint, es_zb_hue_light_type_t light_type);
   ~ZigbeeHueLight() {}
 
-  void onLightChange(void (*callback)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t)) {
+  void onLightChange(void (*callback)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t)) {
     _on_light_change = callback;
   }
   void restoreLight() {
@@ -108,7 +108,7 @@ private:
 
   void lightChanged();
   //callback function to be called on light change (State, R, G, B, Level, Temperature)
-  void (*_on_light_change)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t);
+  void (*_on_light_change)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t);
 
   bool _current_state;
   uint8_t _current_level;
