@@ -3,7 +3,7 @@
 #if CONFIG_ZB_ENABLED
 
 ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
-                               es_zb_hue_light_type_t light_type)
+                               es_zb_hue_light_type_t light_type, uint16_t min_temp, uint16_t max_temp)
     : ZigbeeEP(endpoint)
 {
   uint16_t color_capabilities = 0;
@@ -57,8 +57,6 @@ ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
     uint8_t current_y = 0;
 
     uint16_t color_attr = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_TEMPERATURE_DEF_VALUE;
-    uint16_t min_temp = 153;
-    uint16_t max_temp = 500;
 
     esp_zb_attribute_list_t *color_cluster = esp_zb_cluster_list_get_cluster(_cluster_list, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_color_control_cluster_add_attr(color_cluster, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID, &color_mode);
@@ -93,6 +91,10 @@ ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
   _current_color = {255, 255, 255};
   _current_temperature = 300;
 }
+
+ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
+                               es_zb_hue_light_type_t light_type): ZigbeeHueLight(endpoint, light_type, 153, 450) {}
+
 
 uint16_t ZigbeeHueLight::getCurrentColorTemperature() {
   return (*(uint16_t *)esp_zb_zcl_get_attribute(
