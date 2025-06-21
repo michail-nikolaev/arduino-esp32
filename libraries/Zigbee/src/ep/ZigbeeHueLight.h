@@ -61,6 +61,7 @@ typedef enum
 
 class ZigbeeHueLight : public ZigbeeEP {
 public:
+  ZigbeeHueLight(uint8_t endpoint, es_zb_hue_light_type_t light_type, uint16_t min_temp, uint16_t max_temp);
   ZigbeeHueLight(uint8_t endpoint, es_zb_hue_light_type_t light_type);
   ~ZigbeeHueLight() {}
 
