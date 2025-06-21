@@ -93,7 +93,8 @@ ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
 }
 
 ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
-                               es_zb_hue_light_type_t light_type): ZigbeeHueLight(endpoint, light_type, 153, 450) {}
+                               es_zb_hue_light_type_t light_type): ZigbeeHueLight(endpoint, light_type, 153, 450)
+{}
 
 
 uint16_t ZigbeeHueLight::getCurrentColorTemperature() {
@@ -182,7 +183,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
       lightChanged();
       return;
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U16) {
-      uint8_t light_color_temperature = (*(uint16_t *)message->attribute.data.value);
+      uint16_t light_color_temperature = (*(uint16_t *)message->attribute.data.value);
       _current_temperature = light_color_temperature;
       lightChanged();
       return;
