@@ -165,7 +165,7 @@ static void esp_zb_task(void *pvParameters) {
 // Zigbee core init function
 bool ZigbeeCore::zigbeeInit(esp_zb_cfg_t *zb_cfg, bool erase_nvs) {
 #ifdef CONFIG_ESP_ZB_TRACE_ENABLE
-     esp_zb_set_trace_level_mask(ESP_ZB_TRACE_LEVEL_VERBOSE, ESP_ZB_TRACE_SUBSYSTEM_MAC | ESP_ZB_TRACE_SUBSYSTEM_APP | ESP_ZB_TRACE_SUBSYSTEM_ZBDIRECT);
+     esp_zb_set_trace_level_mask(ESP_ZB_TRACE_LEVEL_INFO, ESP_ZB_TRACE_SUBSYSTEM_APP | ESP_ZB_TRACE_SUBSYSTEM_JSON | ESP_ZB_TRACE_SUBSYSTEM_DIAGNOSTIC);
 #endif
   // Zigbee platform configuration
   esp_zb_platform_config_t platform_config = {
