@@ -132,6 +132,13 @@ uint8_t ZigbeeHueLight::getCurrentColorSaturation() {
              ->data_p);
 }
 
+uint8_t ZigbeeHueLight::getCurrentColorMode() {
+  return (*(uint16_t *)esp_zb_zcl_get_attribute(
+             _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_ENHANCED_COLOR_MODE_ID
+  )
+             ->data_p);
+}
+
 //set attribute method -> method overridden in child class
 void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *message) {
   //check the data and call right method
@@ -186,6 +193,11 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
       uint16_t light_color_temperature = (*(uint16_t *)message->attribute.data.value);
       _current_temperature = light_color_temperature;
       lightChanged();
+      return; 
+    } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_8BIT_ENUM) {
+      uint8_t color_mode = (*(uint8_t *)message->attribute.data.value);
+      _current_color_mode = (esp_zb_zcl_color_control_color_mode_t) color_mode;
+      lightChanged();
       return;
     } else {
       log_w("Received message ignored. Attribute ID: %d not supported for Color Control", message->attribute.id);
@@ -197,7 +209,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
 
 void ZigbeeHueLight::lightChanged() {
   if (_on_light_change) {
-    _on_light_change(_current_state, _endpoint, _current_color.r, _current_color.g, _current_color.b, _current_level, _current_temperature);
+    _on_light_change(_current_state, _endpoint, _current_color.r, _current_color.g, _current_color.b, _current_level, _current_temperature, _current_color_mode);
   }
 }
 

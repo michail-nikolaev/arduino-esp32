@@ -250,8 +250,8 @@ static esp_err_t zb_attribute_set_handler(const esp_zb_zcl_set_attr_value_messag
   }
 
   log_v(
-    "Received message: endpoint(%d), cluster(0x%x), attribute(0x%x), data size(%d)", message->info.dst_endpoint, message->info.cluster, message->attribute.id,
-    message->attribute.data.size
+    "Received message: endpoint(%d), cluster(0x%x), attribute(0x%x), data size(%d), type(%d)", message->info.dst_endpoint, message->info.cluster, message->attribute.id,
+    message->attribute.data.size, message->attribute.data.type
   );
 
   // List through all Zigbee EPs and call the callback function, with the message

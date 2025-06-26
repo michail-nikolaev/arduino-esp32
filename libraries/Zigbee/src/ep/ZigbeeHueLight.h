@@ -59,13 +59,24 @@ typedef enum
   ESP_ZB_HUE_LIGHT_TYPE_EXTENDED_COLOR = 0x0005,
 } es_zb_hue_light_type_t;
 
+typedef enum 
+{
+  /** CurrentHue and CurrentSaturation */
+  ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION    = 0x00,
+  /** CurrentX and CurrentY */
+  ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y       = 0x01,
+  /** ColorTemperature */
+  ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_TEMPERATURE       = 0x02,
+} esp_zb_zcl_color_control_color_mode_t;
+
+
 class ZigbeeHueLight : public ZigbeeEP {
 public:
   ZigbeeHueLight(uint8_t endpoint, es_zb_hue_light_type_t light_type, uint16_t min_temp, uint16_t max_temp);
   ZigbeeHueLight(uint8_t endpoint, es_zb_hue_light_type_t light_type);
   ~ZigbeeHueLight() {}
 
-  void onLightChange(void (*callback)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t)) {
+  void onLightChange(void (*callback)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t, esp_zb_zcl_color_control_color_mode_t)) {
     _on_light_change = callback;
   }
   void restoreLight() {
@@ -97,6 +108,9 @@ public:
   uint8_t getLightBlue() {
     return _current_color.b;
   }
+  uint8_t getColorMode() {
+    return _current_color_mode;
+  }
 
 private:
   void zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *message) override;
@@ -106,13 +120,15 @@ private:
   uint8_t getCurrentColorHue();
   uint8_t getCurrentColorSaturation();
   uint16_t getCurrentColorTemperature();
+  uint8_t getCurrentColorMode();
 
   void lightChanged();
   //callback function to be called on light change (State, R, G, B, Level, Temperature)
-  void (*_on_light_change)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t);
+  void (*_on_light_change)(bool, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint16_t, esp_zb_zcl_color_control_color_mode_t);
 
   bool _current_state;
   uint8_t _current_level;
+  esp_zb_zcl_color_control_color_mode_t _current_color_mode;
   uint16_t _current_temperature;
   espRgbColor_t _current_color;
 };
