@@ -35,6 +35,11 @@ static esp_err_t zb_cmd_default_resp_handler(const esp_zb_zcl_cmd_default_resp_m
 static esp_err_t zb_window_covering_movement_resp_handler(const esp_zb_zcl_window_covering_movement_message_t *message);
 static esp_err_t zb_ota_upgrade_status_handler(const esp_zb_zcl_ota_upgrade_value_message_t *message);
 static esp_err_t zb_ota_upgrade_query_image_resp_handler(const esp_zb_zcl_ota_upgrade_query_image_resp_message_t *message);
+static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_message_t *message);
+static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_message_t *message);
+static esp_err_t zb_cmd_get_scene_membership_handler(const esp_zb_zcl_scenes_get_scene_membership_resp_message_t *message);
+static esp_err_t zb_cmd_operate_scene_resp_handler(const esp_zb_zcl_scenes_operate_scene_resp_message_t *message);
+static esp_err_t zb_cmd_scenes_view_scene_resp_handler(const esp_zb_zcl_scenes_view_scene_resp_message_t *message);
 
 // Zigbee action handlers
 [[maybe_unused]]
@@ -59,10 +64,180 @@ static esp_err_t zb_action_handler(esp_zb_core_action_callback_id_t callback_id,
       ret = zb_ota_upgrade_query_image_resp_handler((esp_zb_zcl_ota_upgrade_query_image_resp_message_t *)message);
       break;
     case ESP_ZB_CORE_CMD_DEFAULT_RESP_CB_ID: ret = zb_cmd_default_resp_handler((esp_zb_zcl_cmd_default_resp_message_t *)message); break;
+    case ESP_ZB_CORE_SCENES_STORE_SCENE_CB_ID: ret = zb_cmd_scenes_store_handler((esp_zb_zcl_store_scene_message_t *)message); break;
+    case ESP_ZB_CORE_SCENES_RECALL_SCENE_CB_ID: ret = zb_cmd_scenes_recall_handler((esp_zb_zcl_recall_scene_message_t *)message); break;
+    case ESP_ZB_CORE_CMD_GET_SCENE_MEMBERSHIP_RESP_CB_ID: ret = zb_cmd_get_scene_membership_handler((esp_zb_zcl_scenes_get_scene_membership_resp_message_t *)message); break;
+    case ESP_ZB_CORE_CMD_OPERATE_SCENE_RESP_CB_ID: ret = zb_cmd_operate_scene_resp_handler((esp_zb_zcl_scenes_operate_scene_resp_message_t *)message); break;
+	case ESP_ZB_CORE_CMD_VIEW_SCENE_RESP_CB_ID: ret = zb_cmd_scenes_view_scene_resp_handler((esp_zb_zcl_scenes_view_scene_resp_message_t *)message); break;
     default:                                 log_w("Receive unhandled Zigbee action(0x%x) callback", callback_id); break;
   }
   return ret;
 }
+
+static esp_err_t zb_cmd_operate_scene_resp_handler(const esp_zb_zcl_scenes_operate_scene_resp_message_t *message)
+{
+   if (!message) {
+        log_e("Empty message");
+        return ESP_FAIL;
+    }
+    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
+       log_e("Received message: error status(%d)", message->info.status);
+       return ESP_ERR_INVALID_ARG;
+    }
+
+    log_v("Receive scenes %d command response with Scene ID: %d, Group ID: 0x%04x", message->info.command.id,
+            message->scene_id, message->group_id);
+    return ESP_OK;
+}
+
+static esp_err_t zb_cmd_scenes_view_scene_resp_handler(const esp_zb_zcl_scenes_view_scene_resp_message_t *message)
+{
+   if (!message) {
+        log_e("Empty message");
+        return ESP_FAIL;
+    }
+    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
+       log_e("Received message: error status(%d)", message->info.status);
+       return ESP_ERR_INVALID_ARG;
+    }
+
+    log_v("Receive scenes view response with Scene ID: %d, Group ID: 0x%04x", message->scene_id,
+            message->group_id);
+    return ESP_OK;
+}
+
+static esp_err_t zb_cmd_get_scene_membership_handler(const esp_zb_zcl_scenes_get_scene_membership_resp_message_t *message)
+{
+    if (!message) {
+        log_e("Empty message");
+        return ESP_FAIL;
+    }
+    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
+       log_e("Received message: error status(%d)", message->info.status);
+       return ESP_ERR_INVALID_ARG;
+    }
+
+    log_v("Receive scenes get scene membership response with Group ID: 0x%04x, capacity: %d", message->group_id,
+            message->capacity);
+    log_v("Scene List:");
+    for (int i = 0; i < message->scene_count; i++) {
+        log_v("%d", message->scene_list[i]);
+    }
+    return ESP_OK;
+}
+
+static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_message_t *message)
+{
+    if (!message) {
+        log_e("Empty message");
+        return ESP_FAIL;
+    }
+    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
+       log_e("Received message: error status(%d)", message->info.status);
+       return ESP_ERR_INVALID_ARG;
+    }
+    esp_err_t ret = ESP_OK;
+
+    log_v("Store scene %d to group %d", message->scene_id, message->group_id);
+
+    uint8_t scene_light_state =
+        *(uint8_t *)esp_zb_zcl_get_attribute(message->info.dst_endpoint, ESP_ZB_ZCL_CLUSTER_ID_ON_OFF,
+                                            ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID)
+            ->data_p;
+    esp_zb_zcl_scenes_extension_field_t on_off_extension_field = {
+        .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_ON_OFF,
+        .length = sizeof(scene_light_state),
+        .extension_field_attribute_value_list = &scene_light_state,
+        .next = NULL,
+    };
+    uint8_t scene_current_level = *(uint8_t *)esp_zb_zcl_get_attribute(
+                                    message->info.dst_endpoint, ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL,
+                                    ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_LEVEL_CONTROL_CURRENT_LEVEL_ID)
+                                    ->data_p;
+    esp_zb_zcl_scenes_extension_field_t level_extension_field = {
+        .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL,
+        .length = sizeof(scene_current_level),
+        .extension_field_attribute_value_list = &scene_current_level,
+        .next = &on_off_extension_field,
+    };
+    uint16_t scene_current_temperature = *(uint16_t *)esp_zb_zcl_get_attribute(
+                                    message->info.dst_endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL,
+                                    ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID)
+                                    ->data_p;
+    esp_zb_zcl_scenes_extension_field_t temperature_extension_field = {
+        .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL,
+        .length = sizeof(scene_current_temperature),
+        .extension_field_attribute_value_list = (uint8_t *)&scene_current_temperature,
+        .next = &level_extension_field,
+    };
+    ret = esp_zb_zcl_scenes_table_store(message->info.dst_endpoint, message->group_id, message->scene_id, 0x0000,
+                                        &temperature_extension_field);
+    esp_zb_zcl_scenes_table_show(message->info.dst_endpoint);
+    return ret;
+}
+
+static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_message_t *message)
+{
+    if (!message) {
+        log_e("Empty message");
+        return ESP_FAIL;
+    }
+    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
+       log_e("Received message: error status(%d)", message->info.status);
+       return ESP_ERR_INVALID_ARG;
+    }
+    esp_err_t ret = ESP_OK;
+    log_v("Recall scene %d from group %d", message->scene_id, message->group_id);
+    esp_zb_zcl_scenes_extension_field_t *field = message->field_set;
+    while (field) {
+        if (field->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_ON_OFF) {
+            esp_zb_zcl_on_off_cmd_t cmd = {                
+                .zcl_basic_cmd = {
+                  .dst_addr_u = {
+                    .addr_short = esp_zb_get_short_address(),
+                  },
+                  .dst_endpoint = message->info.dst_endpoint,
+                  .src_endpoint = 0,
+                },
+                .address_mode = ESP_ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
+                .on_off_cmd_id = *(uint8_t *)field->extension_field_attribute_value_list,
+            };
+            esp_zb_zcl_on_off_cmd_req(&cmd);
+        } else if (field->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL) {
+            esp_zb_zcl_move_to_level_cmd_t cmd = {                
+                .zcl_basic_cmd = {
+                  .dst_addr_u = {
+                    .addr_short = esp_zb_get_short_address(),
+                  },
+                  .dst_endpoint = message->info.dst_endpoint,
+                  .src_endpoint = 0,
+                },
+                .level = *(uint8_t *)field->extension_field_attribute_value_list,
+                .transition_time = 0,
+            };
+            esp_zb_zcl_level_move_to_level_cmd_req(&cmd);
+        } else if (field->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) {
+            esp_zb_zcl_color_move_to_color_temperature_cmd_t cmd = {                
+                .zcl_basic_cmd = {
+                  .dst_addr_u = {
+                    .addr_short = esp_zb_get_short_address(),
+                  },
+                  .dst_endpoint = message->info.dst_endpoint,
+                  .src_endpoint = 0,
+                },
+                .color_temperature = *(uint16_t *)field->extension_field_attribute_value_list,
+                .transition_time = 0,
+            };
+            esp_zb_zcl_color_move_to_color_temperature_cmd_req(&cmd);
+        } else {
+             log_e("Cluster ID %d not supported", field->cluster_id);
+        }
+        field = field->next;
+    }
+    return ret;
+}
+
+
 
 static esp_err_t zb_attribute_set_handler(const esp_zb_zcl_set_attr_value_message_t *message) {
   if (!message) {
