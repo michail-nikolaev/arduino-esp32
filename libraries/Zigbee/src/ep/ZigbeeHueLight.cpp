@@ -90,6 +90,7 @@ ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
   _current_level = 254;
   _current_color = {255, 255, 255};
   _current_temperature = 300;
+  _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y;
 }
 
 ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
