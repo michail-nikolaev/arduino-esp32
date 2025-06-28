@@ -4,6 +4,14 @@
 
 #if CONFIG_ZB_ENABLED
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "zboss_api.h"
+#ifdef __cplusplus
+}
+#endif
+
 #include "esp_ota_ops.h"
 #if CONFIG_ZB_DELTA_OTA  // Delta OTA, code is prepared for this feature but not enabled by default
 #include "esp_delta_ota_ops.h"
@@ -37,9 +45,18 @@ static esp_err_t zb_ota_upgrade_status_handler(const esp_zb_zcl_ota_upgrade_valu
 static esp_err_t zb_ota_upgrade_query_image_resp_handler(const esp_zb_zcl_ota_upgrade_query_image_resp_message_t *message);
 static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_message_t *message);
 static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_message_t *message);
-static esp_err_t zb_cmd_get_scene_membership_handler(const esp_zb_zcl_scenes_get_scene_membership_resp_message_t *message);
-static esp_err_t zb_cmd_operate_scene_resp_handler(const esp_zb_zcl_scenes_operate_scene_resp_message_t *message);
-static esp_err_t zb_cmd_scenes_view_scene_resp_handler(const esp_zb_zcl_scenes_view_scene_resp_message_t *message);
+
+
+[[maybe_unused]]
+static bool zb_raw_command_handler(uint8_t bufid) {
+#ifdef CONFIG_ESP_ZB_TRACE_ENABLE
+    uint8_t buf[zb_buf_len(bufid)];
+    zb_zcl_parsed_hdr_t *cmd_info = ZB_BUF_GET_PARAM(bufid, zb_zcl_parsed_hdr_t);
+    memcpy(buf, zb_buf_begin(bufid), sizeof(buf));
+    log_v("Raw command %d ; %d; %d", cmd_info->cluster_id, cmd_info->profile_id, cmd_info->cmd_id);
+#endif
+	return false;
+}
 
 // Zigbee action handlers
 [[maybe_unused]]
@@ -63,67 +80,11 @@ static esp_err_t zb_action_handler(esp_zb_core_action_callback_id_t callback_id,
     case ESP_ZB_CORE_OTA_UPGRADE_QUERY_IMAGE_RESP_CB_ID:
       ret = zb_ota_upgrade_query_image_resp_handler((esp_zb_zcl_ota_upgrade_query_image_resp_message_t *)message);
       break;
-    case ESP_ZB_CORE_CMD_DEFAULT_RESP_CB_ID: ret = zb_cmd_default_resp_handler((esp_zb_zcl_cmd_default_resp_message_t *)message); break;
     case ESP_ZB_CORE_SCENES_STORE_SCENE_CB_ID: ret = zb_cmd_scenes_store_handler((esp_zb_zcl_store_scene_message_t *)message); break;
     case ESP_ZB_CORE_SCENES_RECALL_SCENE_CB_ID: ret = zb_cmd_scenes_recall_handler((esp_zb_zcl_recall_scene_message_t *)message); break;
-    case ESP_ZB_CORE_CMD_GET_SCENE_MEMBERSHIP_RESP_CB_ID: ret = zb_cmd_get_scene_membership_handler((esp_zb_zcl_scenes_get_scene_membership_resp_message_t *)message); break;
-    case ESP_ZB_CORE_CMD_OPERATE_SCENE_RESP_CB_ID: ret = zb_cmd_operate_scene_resp_handler((esp_zb_zcl_scenes_operate_scene_resp_message_t *)message); break;
-	case ESP_ZB_CORE_CMD_VIEW_SCENE_RESP_CB_ID: ret = zb_cmd_scenes_view_scene_resp_handler((esp_zb_zcl_scenes_view_scene_resp_message_t *)message); break;
     default:                                 log_w("Receive unhandled Zigbee action(0x%x) callback", callback_id); break;
   }
   return ret;
-}
-
-static esp_err_t zb_cmd_operate_scene_resp_handler(const esp_zb_zcl_scenes_operate_scene_resp_message_t *message)
-{
-   if (!message) {
-        log_e("Empty message");
-        return ESP_FAIL;
-    }
-    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
-       log_e("Received message: error status(%d)", message->info.status);
-       return ESP_ERR_INVALID_ARG;
-    }
-
-    log_v("Receive scenes %d command response with Scene ID: %d, Group ID: 0x%04x", message->info.command.id,
-            message->scene_id, message->group_id);
-    return ESP_OK;
-}
-
-static esp_err_t zb_cmd_scenes_view_scene_resp_handler(const esp_zb_zcl_scenes_view_scene_resp_message_t *message)
-{
-   if (!message) {
-        log_e("Empty message");
-        return ESP_FAIL;
-    }
-    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
-       log_e("Received message: error status(%d)", message->info.status);
-       return ESP_ERR_INVALID_ARG;
-    }
-
-    log_v("Receive scenes view response with Scene ID: %d, Group ID: 0x%04x", message->scene_id,
-            message->group_id);
-    return ESP_OK;
-}
-
-static esp_err_t zb_cmd_get_scene_membership_handler(const esp_zb_zcl_scenes_get_scene_membership_resp_message_t *message)
-{
-    if (!message) {
-        log_e("Empty message");
-        return ESP_FAIL;
-    }
-    if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
-       log_e("Received message: error status(%d)", message->info.status);
-       return ESP_ERR_INVALID_ARG;
-    }
-
-    log_v("Receive scenes get scene membership response with Group ID: 0x%04x, capacity: %d", message->group_id,
-            message->capacity);
-    log_v("Scene List:");
-    for (int i = 0; i < message->scene_count; i++) {
-        log_v("%d", message->scene_list[i]);
-    }
-    return ESP_OK;
 }
 
 static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_message_t *message)
@@ -172,6 +133,9 @@ static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_messag
     };
     ret = esp_zb_zcl_scenes_table_store(message->info.dst_endpoint, message->group_id, message->scene_id, 0x0000,
                                         &temperature_extension_field);
+    if (ret != ESP_OK) {
+        log_e("Unable to store scene %d", ret);
+    }
     esp_zb_zcl_scenes_table_show(message->info.dst_endpoint);
     return ret;
 }
@@ -183,7 +147,7 @@ static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_mess
         return ESP_FAIL;
     }
     if (message->info.status != ESP_ZB_ZCL_STATUS_SUCCESS) {
-       log_e("Received message: error status(%d)", message->info.status);
+       log_e("Received message: error status(%d), scene %d from group %d", message->info.status, message->scene_id, message->group_id);
        return ESP_ERR_INVALID_ARG;
     }
     esp_err_t ret = ESP_OK;
@@ -236,8 +200,6 @@ static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_mess
     }
     return ret;
 }
-
-
 
 static esp_err_t zb_attribute_set_handler(const esp_zb_zcl_set_attr_value_message_t *message) {
   if (!message) {

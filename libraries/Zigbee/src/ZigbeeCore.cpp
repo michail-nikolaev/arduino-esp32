@@ -44,6 +44,7 @@ ZigbeeCore::ZigbeeCore() {
 
 //forward declaration
 static esp_err_t zb_action_handler(esp_zb_core_action_callback_id_t callback_id, const void *message);
+static bool zb_raw_command_handler(uint8_t bufid);
 bool zb_apsde_data_indication_handler(esp_zb_apsde_data_ind_t ind);
 
 bool ZigbeeCore::begin(esp_zb_cfg_t *role_cfg, bool erase_nvs) {
@@ -165,7 +166,7 @@ static void esp_zb_task(void *pvParameters) {
 // Zigbee core init function
 bool ZigbeeCore::zigbeeInit(esp_zb_cfg_t *zb_cfg, bool erase_nvs) {
 #ifdef CONFIG_ESP_ZB_TRACE_ENABLE
-     esp_zb_set_trace_level_mask(ESP_ZB_TRACE_LEVEL_INFO, ESP_ZB_TRACE_SUBSYSTEM_APP | ESP_ZB_TRACE_SUBSYSTEM_JSON | ESP_ZB_TRACE_SUBSYSTEM_DIAGNOSTIC);
+     esp_zb_set_trace_level_mask(ESP_ZB_TRACE_LEVEL_INFO, ESP_ZB_TRACE_SUBSYSTEM_APP | ESP_ZB_TRACE_SUBSYSTEM_DIAGNOSTIC);
 #endif
   // Zigbee platform configuration
   esp_zb_platform_config_t platform_config = {
@@ -215,6 +216,8 @@ bool ZigbeeCore::zigbeeInit(esp_zb_cfg_t *zb_cfg, bool erase_nvs) {
   }
   // Register Zigbee action handler
   esp_zb_core_action_handler_register(zb_action_handler);
+  esp_zb_raw_command_handler_register(zb_raw_command_handler);
+
   err = esp_zb_set_primary_network_channel_set(_primary_channel_mask);
   if (err != ESP_OK) {
     log_e("Failed to set primary network channel mask");
