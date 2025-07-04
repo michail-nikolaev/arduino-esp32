@@ -46,16 +46,65 @@ static esp_err_t zb_ota_upgrade_query_image_resp_handler(const esp_zb_zcl_ota_up
 static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_message_t *message);
 static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_message_t *message);
 
+typedef struct move_to_color_cmd_s {
+    uint16_t color_x;                                   /*!< current value of chromaticity value x from (0 ~ 1) to (0 ~ 65535)*/
+    uint16_t color_y;                                   /*!< current value of chromaticity value y from (0 ~ 1) to (0 ~ 65535)*/
+    uint16_t transition_time;                           /*!< time wants to transition tenths of a second */
+} move_to_color_cmd_t;
 
 [[maybe_unused]]
 static bool zb_raw_command_handler(uint8_t bufid) {
-#ifdef CONFIG_ESP_ZB_TRACE_ENABLE
     uint8_t buf[zb_buf_len(bufid)];
     zb_zcl_parsed_hdr_t *cmd_info = ZB_BUF_GET_PARAM(bufid, zb_zcl_parsed_hdr_t);
     memcpy(buf, zb_buf_begin(bufid), sizeof(buf));
-    log_v("Raw command %d ; %d; %d", cmd_info->cluster_id, cmd_info->profile_id, cmd_info->cmd_id);
+#ifdef CONFIG_ESP_ZB_TRACE_ENABLE
+    log_v("Raw command cluster: %d ; cmd_id %d", cmd_info->cluster_id, cmd_info->cmd_id);
 #endif
-	return false;
+    // workaround for: https://github.com/espressif/esp-zigbee-sdk/issues/528
+    if (cmd_info->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) {
+        if (cmd_info->cmd_id == ESP_ZB_ZCL_CMD_COLOR_CONTROL_MOVE_TO_COLOR) {
+            uint8_t dst_ep = cmd_info->addr_data.common_data.dst_endpoint;
+            move_to_color_cmd_t* req = (move_to_color_cmd_t*)buf;
+            log_v("Receive move to color command, endpoint: %d, x: %d, y: %d, time: %d", dst_ep, req->color_x, req->color_y, req->transition_time);
+
+            if (Zigbee.ep_objects.size() > 1) {
+              for (std::list<ZigbeeEP *>::iterator it = Zigbee.ep_objects.begin(); it != Zigbee.ep_objects.end(); ++it) {
+                if (dst_ep == (*it)->getEndpoint()) {
+                  esp_zb_zcl_status_t ret = esp_zb_zcl_set_attribute_val(
+                    dst_ep, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID, &req->color_x, false
+                  );
+                  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+                    log_e("Failed to set light xy color: 0x%x", ret);
+                  }
+                  //set y color
+                  ret = esp_zb_zcl_set_attribute_val(
+                    dst_ep, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID, &req->color_y, false
+                  );
+                  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+                    log_e("Failed to set light y color: 0x%x", ret);
+                  }
+                  uint8_t color_mode = ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y;
+                  ret = esp_zb_zcl_set_attribute_val(
+                    dst_ep, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID, &color_mode, false
+                  );
+                  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+                    log_e("Failed to set color mode: 0x%x", ret);
+                  }
+                  if (ret == ESP_ZB_ZCL_STATUS_SUCCESS) {
+                    log_v("Set color xy to endpoint %d", dst_ep);
+                  }
+                  
+                  (*it)->zbUpdateStateFromAttributes();
+                }
+              }
+              zb_zcl_send_default_handler(bufid, cmd_info, ZB_ZCL_STATUS_SUCCESS);
+              return true;
+            } else {
+              return false;
+            }
+        }
+    }
+    return false;
 }
 
 // Zigbee action handlers

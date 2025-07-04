@@ -114,6 +114,8 @@ public:
 
 private:
   void zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *message) override;
+  // workaround https://github.com/espressif/esp-zigbee-sdk/issues/528
+  void zbUpdateStateFromAttributes() override;
 
   uint16_t getCurrentColorX();
   uint16_t getCurrentColorY();

@@ -172,6 +172,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
       uint16_t light_color_y = getCurrentColorY();
       //calculate RGB from XY and call setColor()
       _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
+      _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y;
       lightChanged();
       return;
 
@@ -181,21 +182,26 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
       uint16_t light_color_y = (*(uint16_t *)message->attribute.data.value);
       //calculate RGB from XY and call setColor()
       _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
+      _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y;
       lightChanged();
       return;
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_HUE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U8) {
       uint8_t light_color_hue = (*(uint8_t *)message->attribute.data.value);
       _current_color = espHsvToRgbColor(light_color_hue, getCurrentColorSaturation(), 255);
+	  _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION;
       lightChanged();
       return;
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_SATURATION_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U8) {
       uint8_t light_color_saturation = (*(uint8_t *)message->attribute.data.value);
       _current_color = espHsvToRgbColor(getCurrentColorHue(), light_color_saturation, 255);
+	  _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION;
       lightChanged();
       return;
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U16) {
-      uint16_t light_color_temperature = (*(uint16_t *)message->attribute.data.value);
+      uint16_t light_color_temperature = (*(uint16_t *)message->attribute.data.value);      
       _current_temperature = light_color_temperature;
+      log_v("Received temperatrure: %d, endpoint: %d", _current_temperature, _endpoint);
+      _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_TEMPERATURE;
       lightChanged();
       return; 
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_8BIT_ENUM) {
@@ -210,6 +216,32 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
   } else {
     log_w("Received message ignored. Cluster ID: %d not supported for Color dimmable Light", message->info.cluster);
   }
+}
+
+// workaround for https://github.com/espressif/esp-zigbee-sdk/issues/528
+void ZigbeeHueLight::zbUpdateStateFromAttributes() {
+  esp_zb_zcl_status_t ret = ESP_ZB_ZCL_STATUS_SUCCESS;
+  esp_zb_zcl_attr_t *attr;
+
+  uint16_t light_color_x = 0,
+           light_color_y = 0;  
+  
+  attr = esp_zb_zcl_get_attribute(
+    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID
+  );
+  _current_color_mode = (esp_zb_zcl_color_control_color_mode_t)(*((uint8_t*)attr->data_p));
+  attr = esp_zb_zcl_get_attribute(
+    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID
+  );
+  light_color_x = *((uint16_t*)attr->data_p);
+  
+  attr = esp_zb_zcl_get_attribute(
+    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID
+  );
+  light_color_y = *((uint16_t*)attr->data_p);
+  log_v("Updating to x = %d and y = %d, mode = %d", light_color_x, light_color_y, _current_color_mode);
+  _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
+  lightChanged();
 }
 
 void ZigbeeHueLight::lightChanged() {
@@ -249,38 +281,43 @@ bool ZigbeeHueLight::setLight(bool state, uint8_t level, uint8_t red, uint8_t gr
     log_e("Failed to set light level: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
     goto unlock_and_return;
   }
-  //set x color
-  ret = esp_zb_zcl_set_attribute_val(
-    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID, &xy_color.x, false
-  );
-  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
-    log_e("Failed to set light xy color: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
-    goto unlock_and_return;
+  if (_current_color_mode ==  ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y) {
+    //set x color
+    ret = esp_zb_zcl_set_attribute_val(
+      _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID, &xy_color.x, false
+    );
+    if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+      log_e("Failed to set light xy color: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
+      goto unlock_and_return;
+    }
+    //set y color
+    ret = esp_zb_zcl_set_attribute_val(
+      _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID, &xy_color.y, false
+    );
+    if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+      log_e("Failed to set light y color: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
+      goto unlock_and_return;
+    }
   }
-  //set y color
-  ret = esp_zb_zcl_set_attribute_val(
-    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID, &xy_color.y, false
-  );
-  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
-    log_e("Failed to set light y color: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
-    goto unlock_and_return;
+  if (_current_color_mode == ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION) {
+    //set hue
+    ret = esp_zb_zcl_set_attribute_val(
+      _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_HUE_ID, &hue, false
+    );
+    if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+      log_e("Failed to set light hue: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
+      goto unlock_and_return;
+    }
+    //set saturation
+    ret = esp_zb_zcl_set_attribute_val(
+      _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_SATURATION_ID, &hsv_color.s, false
+    );
+    if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+      log_e("Failed to set light saturation: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
+      goto unlock_and_return;
+    }
   }
-  //set hue
-  ret = esp_zb_zcl_set_attribute_val(
-    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_HUE_ID, &hue, false
-  );
-  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
-    log_e("Failed to set light hue: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
-    goto unlock_and_return;
-  }
-  //set saturation
-  ret = esp_zb_zcl_set_attribute_val(
-    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_SATURATION_ID, &hsv_color.s, false
-  );
-  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
-    log_e("Failed to set light saturation: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
-    goto unlock_and_return;
-  }
+
 unlock_and_return:
   esp_zb_lock_release();
   return ret == ESP_ZB_ZCL_STATUS_SUCCESS;
