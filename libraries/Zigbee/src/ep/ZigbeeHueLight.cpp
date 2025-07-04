@@ -41,6 +41,8 @@ ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
             : (has_hs ? ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION
                      : ZB_ZCL_COLOR_CONTROL_COLOR_MODE_TEMPERATURE);
 
+  _current_color_mode = (esp_zb_zcl_color_control_color_mode_t) color_mode;
+
   if (light_type != ESP_ZB_HUE_LIGHT_TYPE_ON_OFF) {
     esp_zb_color_dimmable_light_cfg_t light_cfg = ZIGBEE_DEFAULT_HUE_LIGHT_CONFIG();
 
@@ -90,7 +92,6 @@ ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
   _current_level = 254;
   _current_color = {255, 255, 255};
   _current_temperature = 300;
-  _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y;
 }
 
 ZigbeeHueLight::ZigbeeHueLight(uint8_t  endpoint,
@@ -167,6 +168,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
   } else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) {
     if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_X_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U16) {
       uint16_t light_color_x = (*(uint16_t *)message->attribute.data.value);
+      log_v("Received color X: %d, endpoint: %d", light_color_x, _endpoint);
       uint16_t light_color_y = getCurrentColorY();
       //calculate RGB from XY and call setColor()
       _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
@@ -175,6 +177,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
 
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U16) {
       uint16_t light_color_x = getCurrentColorX();
+      log_v("Received color Y: %d, endpoint: %d", light_color_x, _endpoint);
       uint16_t light_color_y = (*(uint16_t *)message->attribute.data.value);
       //calculate RGB from XY and call setColor()
       _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
@@ -197,6 +200,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
       return; 
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_8BIT_ENUM) {
       uint8_t color_mode = (*(uint8_t *)message->attribute.data.value);
+      log_v("Received color mode: %d, endpoint: %d", color_mode, _endpoint);
       _current_color_mode = (esp_zb_zcl_color_control_color_mode_t) color_mode;
       lightChanged();
       return;
