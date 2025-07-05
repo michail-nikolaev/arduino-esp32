@@ -60,8 +60,14 @@ static bool zb_raw_command_handler(uint8_t bufid) {
 #ifdef CONFIG_ESP_ZB_TRACE_ENABLE
     log_v("Raw command cluster: %d ; cmd_id %d", cmd_info->cluster_id, cmd_info->cmd_id);
 #endif
-    // workaround for: https://github.com/espressif/esp-zigbee-sdk/issues/528
-    if (cmd_info->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) {
+    if (cmd_info->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_SCENES) {
+        // workaound for: https://github.com/espressif/esp-zigbee-sdk/issues/681
+        if (cmd_info->cmd_id == ESP_ZB_ZCL_CMD_SCENES_ADD_SCENE && cmd_info->is_manuf_specific && cmd_info->manuf_specific == 0x100b) {
+            log_v("Received manuf specific add scene - response with ERROR to avoid assertion");
+            zb_zcl_send_default_handler(bufid, cmd_info, ZB_ZCL_STATUS_FAIL);
+            return true;
+        }
+        // workaround for: https://github.com/espressif/esp-zigbee-sdk/issues/528
         if (cmd_info->cmd_id == ESP_ZB_ZCL_CMD_COLOR_CONTROL_MOVE_TO_COLOR) {
             uint8_t dst_ep = cmd_info->addr_data.common_data.dst_endpoint;
             move_to_color_cmd_t* req = (move_to_color_cmd_t*)buf;
