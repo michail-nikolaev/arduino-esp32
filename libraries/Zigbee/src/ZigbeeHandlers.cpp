@@ -67,6 +67,8 @@ static bool zb_raw_command_handler(uint8_t bufid) {
             zb_zcl_send_default_handler(bufid, cmd_info, ZB_ZCL_STATUS_FAIL);
             return true;
         }
+    }
+    if (cmd_info->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) {
         // workaround for: https://github.com/espressif/esp-zigbee-sdk/issues/528
         if (cmd_info->cmd_id == ESP_ZB_ZCL_CMD_COLOR_CONTROL_MOVE_TO_COLOR) {
             uint8_t dst_ep = cmd_info->addr_data.common_data.dst_endpoint;
