@@ -146,6 +146,7 @@ static esp_err_t zb_action_handler(esp_zb_core_action_callback_id_t callback_id,
 
 static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_message_t *message)
 {
+    // TODO
     if (!message) {
         log_e("Empty message");
         return ESP_FAIL;
@@ -178,6 +179,7 @@ static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_messag
         .extension_field_attribute_value_list = &scene_current_level,
         .next = &on_off_extension_field,
     };
+    /*
     uint16_t scene_current_temperature = *(uint16_t *)esp_zb_zcl_get_attribute(
                                     message->info.dst_endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL,
                                     ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID)
@@ -187,9 +189,9 @@ static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_messag
         .length = sizeof(scene_current_temperature),
         .extension_field_attribute_value_list = (uint8_t *)&scene_current_temperature,
         .next = &level_extension_field,
-    };
+    };*/
     ret = esp_zb_zcl_scenes_table_store(message->info.dst_endpoint, message->group_id, message->scene_id, 0x0000,
-                                        &temperature_extension_field);
+                                        &level_extension_field);
     if (ret != ESP_OK) {
         log_e("Unable to store scene %d", ret);
     }
@@ -199,6 +201,7 @@ static esp_err_t zb_cmd_scenes_store_handler(const esp_zb_zcl_store_scene_messag
 
 static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_message_t *message)
 {
+    // TODO
     if (!message) {
         log_e("Empty message");
         return ESP_FAIL;
@@ -238,7 +241,7 @@ static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_mess
             };
             esp_zb_zcl_level_move_to_level_cmd_req(&cmd);
         } else if (field->cluster_id == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) {
-            esp_zb_zcl_color_move_to_color_temperature_cmd_t cmd = {                
+            /*esp_zb_zcl_color_move_to_color_temperature_cmd_t cmd = {
                 .zcl_basic_cmd = {
                   .dst_addr_u = {
                     .addr_short = esp_zb_get_short_address(),
@@ -249,7 +252,7 @@ static esp_err_t zb_cmd_scenes_recall_handler(const esp_zb_zcl_recall_scene_mess
                 .color_temperature = *(uint16_t *)field->extension_field_attribute_value_list,
                 .transition_time = 0,
             };
-            esp_zb_zcl_color_move_to_color_temperature_cmd_req(&cmd);
+            esp_zb_zcl_color_move_to_color_temperature_cmd_req(&cmd);*/
         } else {
              log_e("Cluster ID %d not supported", field->cluster_id);
         }
