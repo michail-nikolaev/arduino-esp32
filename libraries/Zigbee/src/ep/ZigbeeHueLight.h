@@ -88,7 +88,9 @@ public:
   bool setLightColor(uint8_t red, uint8_t green, uint8_t blue);
   bool setLightColor(espRgbColor_t rgb_color);
   bool setLightColor(espHsvColor_t hsv_color);
-  bool setLight(bool state, uint8_t level, uint8_t red, uint8_t green, uint8_t blue);
+  bool setLight(bool state, uint8_t level, uint8_t red, uint8_t green, uint8_t blue, uint16_t temperature);
+  bool setLightTemperature(uint16_t temperature);
+  bool setColorMode(esp_zb_zcl_color_control_color_mode_t mode);
 
   bool getLightState() {
     return _current_state;

@@ -173,6 +173,7 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
       //calculate RGB from XY and call setColor()
       _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
       _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y;
+      log_v("Updating _current_color 1: %d, %d, %d", _current_color.r, _current_color.g, _current_color.b);
       lightChanged();
       return;
 
@@ -183,18 +184,21 @@ void ZigbeeHueLight::zbAttributeSet(const esp_zb_zcl_set_attr_value_message_t *m
       //calculate RGB from XY and call setColor()
       _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
       _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_CURRENT_X_Y;
+      log_v("Updating _current_color 2: %d, %d, %d", _current_color.r, _current_color.g, _current_color.b);
       lightChanged();
       return;
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_HUE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U8) {
       uint8_t light_color_hue = (*(uint8_t *)message->attribute.data.value);
       _current_color = espHsvToRgbColor(light_color_hue, getCurrentColorSaturation(), 255);
-	  _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION;
+      log_v("Updating _current_color 3: %d, %d, %d", _current_color.r, _current_color.g, _current_color.b);
+	    _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION;      
       lightChanged();
       return;
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_SATURATION_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U8) {
       uint8_t light_color_saturation = (*(uint8_t *)message->attribute.data.value);
       _current_color = espHsvToRgbColor(getCurrentColorHue(), light_color_saturation, 255);
-	  _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION;
+      log_v("Updating _current_color 4: %d, %d, %d", _current_color.r, _current_color.g, _current_color.b);
+	    _current_color_mode = ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION;
       lightChanged();
       return;
     } else if (message->attribute.id == ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID && message->attribute.data.type == ESP_ZB_ZCL_ATTR_TYPE_U16) {
@@ -238,9 +242,16 @@ void ZigbeeHueLight::zbUpdateStateFromAttributes() {
   attr = esp_zb_zcl_get_attribute(
     _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_Y_ID
   );
-  light_color_y = *((uint16_t*)attr->data_p);
-  log_v("Updating to x = %d and y = %d, mode = %d", light_color_x, light_color_y, _current_color_mode);
+  light_color_y = *((uint16_t*)attr->data_p);  
   _current_color = espXYToRgbColor(255, light_color_x, light_color_y);  //TODO: Check if level is correct
+  log_v("Updating _current_color 5: %d, %d, %d", _current_color.r, _current_color.g, _current_color.b);
+  
+  attr = esp_zb_zcl_get_attribute(
+    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID
+  );
+  _current_temperature = (uint16_t)(*((uint16_t*)attr->data_p));
+  log_v("Updating to x = %d and y = %d, temp = %d, mode = %d", light_color_x, light_color_y, _current_temperature, _current_color_mode);
+  
   lightChanged();
 }
 
@@ -250,19 +261,19 @@ void ZigbeeHueLight::lightChanged() {
   }
 }
 
-bool ZigbeeHueLight::setLight(bool state, uint8_t level, uint8_t red, uint8_t green, uint8_t blue) {
+bool ZigbeeHueLight::setLight(bool state, uint8_t level, uint8_t red, uint8_t green, uint8_t blue, uint16_t temperature) {
   esp_zb_zcl_status_t ret = ESP_ZB_ZCL_STATUS_SUCCESS;
   //Update all attributes
   _current_state = state;
   _current_level = level;
   _current_color = {red, green, blue};
+  _current_temperature = temperature;
   lightChanged();
 
-  espXyColor_t xy_color = espRgbColorToXYColor(_current_color);
+  espXyColor_t xy_color = espRgbColorToXYColor({red, green, blue});
   espHsvColor_t hsv_color = espRgbColorToHsvColor(_current_color);
-  uint8_t hue = (uint8_t)hsv_color.h;
 
-  log_v("Updating light state: %d, level: %d, color: %d, %d, %d", state, level, red, green, blue);
+  log_v("Updating light state: %d, level: %d, color: %d, %d, %d, temp: %d", state, level, red, green, blue, temperature);
   /* Update light clusters */
   esp_zb_lock_acquire(portMAX_DELAY);
   //set on/off state
@@ -300,6 +311,7 @@ bool ZigbeeHueLight::setLight(bool state, uint8_t level, uint8_t red, uint8_t gr
     }
   }
   if (_current_color_mode == ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_HUE_SATURATION) {
+    uint8_t hue = (uint8_t)hsv_color.h;
     //set hue
     ret = esp_zb_zcl_set_attribute_val(
       _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_CURRENT_HUE_ID, &hue, false
@@ -317,31 +329,73 @@ bool ZigbeeHueLight::setLight(bool state, uint8_t level, uint8_t red, uint8_t gr
       goto unlock_and_return;
     }
   }
+  if (_current_color_mode == ESP_ZB_ZCL_COLOR_CONTROL_COLOR_MODE_TEMPERATURE) {
+        //set temp
+      ret = esp_zb_zcl_set_attribute_val(
+        _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_TEMPERATURE_ID, &temperature, false
+      );
+      if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+        log_e("Failed to set light temperature: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
+        goto unlock_and_return;
+      }
+  }
 
 unlock_and_return:
   esp_zb_lock_release();
   return ret == ESP_ZB_ZCL_STATUS_SUCCESS;
 }
 
+bool ZigbeeHueLight::setColorMode(esp_zb_zcl_color_control_color_mode_t mode) {
+  esp_zb_zcl_status_t ret = ESP_ZB_ZCL_STATUS_SUCCESS;
+  _current_color_mode = mode;
+
+  esp_zb_lock_acquire(portMAX_DELAY);
+
+  ret = esp_zb_zcl_set_attribute_val(    
+    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_COLOR_MODE_ID, &_current_color_mode, false
+  );
+  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+    log_e("Failed to set color mode level: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
+    goto unlock_and_return;
+  }
+
+  ret = esp_zb_zcl_set_attribute_val(    
+    _endpoint, ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, ESP_ZB_ZCL_ATTR_COLOR_CONTROL_ENHANCED_COLOR_MODE_ID, &_current_color_mode, false
+  );
+  if (ret != ESP_ZB_ZCL_STATUS_SUCCESS) {
+    log_e("Failed to set color mode level: 0x%x: %s", ret, esp_zb_zcl_status_to_name(ret));
+    goto unlock_and_return;
+  }
+
+  unlock_and_return:
+  esp_zb_lock_release();
+  return ret == ESP_ZB_ZCL_STATUS_SUCCESS;
+}
+
 bool ZigbeeHueLight::setLightState(bool state) {
-  return setLight(state, _current_level, _current_color.r, _current_color.g, _current_color.b);
+  return setLight(state, _current_level, _current_color.r, _current_color.g, _current_color.b, _current_temperature);
 }
 
 bool ZigbeeHueLight::setLightLevel(uint8_t level) {
-  return setLight(_current_state, level, _current_color.r, _current_color.g, _current_color.b);
+  return setLight(_current_state, level, _current_color.r, _current_color.g, _current_color.b, _current_temperature);
 }
 
 bool ZigbeeHueLight::setLightColor(uint8_t red, uint8_t green, uint8_t blue) {
-  return setLight(_current_state, _current_level, red, green, blue);
+  return setLight(_current_state, _current_level, red, green, blue, _current_temperature);
 }
 
+bool ZigbeeHueLight::setLightTemperature(uint16_t temperature) {
+  return setLight(_current_state, _current_level, _current_color.r, _current_color.g, _current_color.b, temperature);
+}
+
+
 bool ZigbeeHueLight::setLightColor(espRgbColor_t rgb_color) {
-  return setLight(_current_state, _current_level, rgb_color.r, rgb_color.g, rgb_color.b);
+  return setLight(_current_state, _current_level, rgb_color.r, rgb_color.g, rgb_color.b, _current_temperature);
 }
 
 bool ZigbeeHueLight::setLightColor(espHsvColor_t hsv_color) {
   espRgbColor_t rgb_color = espHsvColorToRgbColor(hsv_color);
-  return setLight(_current_state, _current_level, rgb_color.r, rgb_color.g, rgb_color.b);
+  return setLight(_current_state, _current_level, rgb_color.r, rgb_color.g, rgb_color.b, _current_temperature);
 }
 
 #endif  // CONFIG_ZB_ENABLED
